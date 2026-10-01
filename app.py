@@ -1,12 +1,17 @@
-from flask import Flask, render_template, request, redirect
+from flask import Flask, render_template, request, redirect, session
 import mysql.connector
 from dotenv import load_dotenv
-from datetime import date
+from datetime import date, timedelta
 import os
 
 load_dotenv()
 
+PRIVATE_ACCESS_PIN = os.getenv("PRIVATE_ACCESS_PIN")
+FLASK_SECRET_KEY = os.getenv("FLASK_SECRET_KEY")
+
 app = Flask(__name__)
+app.secret_key = FLASK_SECRET_KEY
+app.permanent_session_lifetime = timedelta(days=365)
 
 db = mysql.connector.connect(
     host=os.getenv("DB_HOST"),
@@ -18,7 +23,12 @@ db = mysql.connector.connect(
 @app.route("/", methods=["GET", "POST"])
 def home():
 
+    if not session.get("logged_in"):
+        return redirect("/login")
+
     if request.method == "POST":
+
+  
         name = request.form["name"]
         item = request.form["item"]
         amount = request.form["amount"]
@@ -112,5 +122,25 @@ def home():
     )
 
 
+@app.route("/login", methods=["GET", "POST"])
+def login():
+
+    if request.method == "POST":
+        entered_pin = request.form["pin"]
+
+        if entered_pin == PRIVATE_ACCESS_PIN:
+            session.permanent = True
+            session["logged_in"] = True
+            return redirect("/")
+
+        return render_template(
+            "login.html",
+            error="Incorrect PIN. Please try again."
+        )
+
+    return render_template("login.html")
+
+
 if __name__ == "__main__":
-    app.run(debug=True)
+    
+    app.run(debug=False)

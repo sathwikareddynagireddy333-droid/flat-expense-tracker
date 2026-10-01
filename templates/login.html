@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Flat Expense Tracker - Login</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+
+    <h2>Flat Expense Tracker</h2>
+
+    <p>Enter the private PIN to continue.</p>
+
+    <form method="POST">
+        <input
+            type="password"
+            name="pin"
+            placeholder="Enter PIN"
+            required
+        >
+
+        <button type="submit">Enter</button>
+    </form>
+
+    {% if error %}
+        <p>{{ error }}</p>
+    {% endif %}
+
+</body>
+</html>
