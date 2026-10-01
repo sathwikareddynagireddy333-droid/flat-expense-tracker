@@ -1,0 +1,116 @@
+from flask import Flask, render_template, request, redirect
+import mysql.connector
+from dotenv import load_dotenv
+from datetime import date
+import os
+
+load_dotenv()
+
+app = Flask(__name__)
+
+db = mysql.connector.connect(
+    host=os.getenv("DB_HOST"),
+    port=int(os.getenv("DB_PORT")),
+    user=os.getenv("DB_USER"),
+    password=os.getenv("DB_PASSWORD"),
+    database=os.getenv("DB_NAME")
+)
+@app.route("/", methods=["GET", "POST"])
+def home():
+
+    if request.method == "POST":
+        name = request.form["name"]
+        item = request.form["item"]
+        amount = request.form["amount"]
+        expense_date = request.form["date"]
+
+        cursor = db.cursor()
+
+        cursor.execute(
+            """
+            INSERT INTO expenses (name, item, amount, date, time)
+            VALUES (%s, %s, %s, %s, CURTIME())
+            """,
+            (name, item, amount, expense_date)
+        )
+
+        db.commit()
+        cursor.close()
+
+        return redirect("/")
+
+    # Get all expenses for Expense History
+    cursor = db.cursor(dictionary=True)
+
+    cursor.execute(
+        """
+        SELECT id, name, item, amount, date, time
+        FROM expenses
+        ORDER BY date DESC, time DESC
+        """
+    )
+
+    expenses = cursor.fetchall()
+
+    # Calculate current month's spending
+    current_month = date.today().strftime("%Y-%m")
+
+    cursor.execute(
+        """
+        SELECT name, SUM(amount) AS total
+        FROM expenses
+        WHERE DATE_FORMAT(date, '%Y-%m') = %s
+        GROUP BY name
+        """,
+        (current_month,)
+    )
+
+    spending_data = cursor.fetchall()
+
+    cursor.close()
+
+    # Start everyone at zero
+    spending = {
+        "Deepa": 0,
+        "Vennela": 0,
+        "Sathwika": 0
+    }
+
+    # Put actual spending into the correct person
+    for row in spending_data:
+        spending[row["name"]] = float(row["total"])
+
+    # Fixed monthly rent
+    rent = 20000
+
+    # Total expenses + rent
+    total_spending = sum(spending.values())
+    total_monthly_cost = total_spending + rent
+
+    # Equal share for 3 people
+    equal_share = total_monthly_cost / 3
+
+    # Rent each person needs to pay
+    rent_to_pay = {}
+
+    for name in spending:
+        rent_to_pay[name] = equal_share - spending[name]
+
+    summary = []
+
+    for name in ["Deepa", "Vennela", "Sathwika"]:
+        summary.append({
+            "name": name,
+            "spent": spending[name],
+            "rent_to_pay": rent_to_pay[name]
+        })
+
+    return render_template(
+        "index.html",
+        expenses=expenses,
+        summary=summary
+    )
+
+
+if __name__ == "__main__":
+    app.run(debug=True)

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flat Expense Tracker</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+    <h1>Flat Expense Tracker</h1>
+
+    <h2>Add Expense</h2>
+
+    <form method="POST">
+
+        <label for="name">Name</label>
+        <br>
+        <select id="name" name="name">
+            <option value="">Select Name</option>
+            <option value="Deepa">Deepa</option>
+            <option value="Vennela">Vennela</option>
+            <option value="Sathwika">Sathwika</option>
+        </select>
+
+        <br><br>
+
+        <label for="item">Item / Food</label>
+        <br>
+        <input type="text" id="item" name="item" placeholder="Enter item or food">
+
+        <br><br>
+
+        <label for="amount">Amount</label>
+        <br>
+        <input type="number" id="amount" name="amount" placeholder="Enter amount">
+
+        <br><br>
+
+        <label for="date">Date</label>
+        <br>
+        <input type="date" id="date" name="date">
+
+        <br><br>
+
+        <button type="submit">Add Expense</button>
+
+    </form>
+
+    <h2>Expense History</h2>
+
+<table>
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Time</th>
+            <th>Name</th>
+            <th>Item / Food</th>
+            <th>Amount</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for expense in expenses %}
+        <tr>
+            <td>{{ expense.date }}</td>
+            <td>{{ expense.time }}</td>
+            <td>{{ expense.name }}</td>
+            <td>{{ expense.item }}</td>
+            <td class="amount">₹{{ expense.amount }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<h2>Monthly Summary</h2>
+
+<button type="button" id="calculateSummary">
+    Calculate Monthly Summary
+</button>
+
+<table class="summary-table">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Money Spent</th>
+            <th>Rent to Pay</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for person in summary %}
+        <tr>
+            <td>{{ person.name }}</td>
+            <td class="amount">₹{{ "%.2f"|format(person.spent) }}</td>
+            <td class="rent">₹{{ "%.2f"|format(person.rent_to_pay) }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+    <script>
+    const today = new Date();
+
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+
+    document.getElementById('date').value = `${year}-${month}-${day}`;
+    </script>
+</body>
+</html>
